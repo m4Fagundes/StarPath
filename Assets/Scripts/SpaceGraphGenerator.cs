@@ -81,7 +81,7 @@ public class SpaceGraphGenerator : MonoBehaviour
 
         lastGenerationPosition = centerPosition;
 
-        Vector2 travelDir = spaceship.GetComponent<SpaceshipMover>().TravelDirection;
+        Vector2 travelDir = spaceship.GetComponent<SpaceshipMover>().IntendedTravelDirection;
         if (travelDir == Vector2.zero)
             travelDir = Random.insideUnitCircle.normalized;
 

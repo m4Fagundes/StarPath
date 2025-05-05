@@ -15,6 +15,8 @@ public class SpaceshipMover : MonoBehaviour
             ? (currentPlanet.position - previousPlanet.position).normalized
             : Vector2.right;
 
+    public Vector2 IntendedTravelDirection  {get; private set;} = Vector2.zero;
+
     public void TravelTo(PlanetNode destination)
     {
         if (isMoving || currentPlanet == null || destination == null || currentPlanet.neighbors == null)
@@ -28,6 +30,8 @@ public class SpaceshipMover : MonoBehaviour
             Debug.LogWarning("Destino não é vizinho do planeta atual.");
             return;
         }
+
+        IntendedTravelDirection  = (destination.position - currentPlanet.position).normalized;
 
         StartCoroutine(MoveToPlanet(destination));
     }
