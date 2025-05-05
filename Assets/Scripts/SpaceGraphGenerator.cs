@@ -6,14 +6,14 @@ public class SpaceGraphGenerator : MonoBehaviour
     [Header("Graph Settings")]
     public int initialPlanetCount = 30;
     public int maxPlanets = 1000;
-    public float connectionDistance = 40f;
+    public float connectionDistance = 30f;
     public Vector2 spawnArea = new Vector2(100, 100);
     public float generationThreshold = 10f;
 
     [Header("Planet Settings")]
     public GameObject planetPrefab;
     public Sprite[] planetSprites;
-    public float planetSpacing = 12f;
+    public float planetSpacing = 20f;
     public int maxConnectionsPerPlanet = 3;
 
     [Header("Spaceship Settings")]
@@ -26,10 +26,21 @@ public class SpaceGraphGenerator : MonoBehaviour
 
     void Start()
     {
+        SetSpawnAreaToCameraView();
         LoadPlanetSprites();
         GenerateInitialGraph();
         CreateSpaceship();
     }
+
+    void SetSpawnAreaToCameraView()
+    {
+        Camera can = Camera.main;
+        float height = 2f * can.orthographicSize;
+        float width = height * can.aspect;
+    
+        spawnArea = new Vector2(width, height);
+    }
+
 
     void LoadPlanetSprites()
     {
