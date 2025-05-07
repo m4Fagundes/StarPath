@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,14 +7,14 @@ public class SpaceGraphGenerator : MonoBehaviour
     [Header("Graph Settings")]
     public int initialPlanetCount = 30;
     public int maxPlanets = 1000;
-    public float connectionDistance = 30f;
+    public float connectionDistance = 50f;
     public Vector2 spawnArea = new Vector2(100, 100);
     public float generationThreshold = 10f;
 
     [Header("Planet Settings")]
     public GameObject planetPrefab;
     public Sprite[] planetSprites;
-    public float planetSpacing = 20f;
+    public float planetSpacing = 100f;
     public int maxConnectionsPerPlanet = 3;
 
     [Header("Spaceship Settings")]
@@ -24,12 +25,16 @@ public class SpaceGraphGenerator : MonoBehaviour
     private GameObject spaceship;
     private Vector2 lastGenerationPosition;
 
+    [Header("Enemy Settings")]
+    public GameObject enemyPrefab;
+
     void Start()
     {
         SetSpawnAreaToCameraView();
         LoadPlanetSprites();
         GenerateInitialGraph();
         CreateSpaceship();
+        SpawnEnemyAtPlanet(planets[Random.Range(1, planets.Count)]);
     }
 
     void SetSpawnAreaToCameraView()
@@ -37,7 +42,7 @@ public class SpaceGraphGenerator : MonoBehaviour
         Camera can = Camera.main;
         float height = 2f * can.orthographicSize;
         float width = height * can.aspect;
-    
+
         spawnArea = new Vector2(width, height);
     }
 
@@ -293,6 +298,41 @@ public class SpaceGraphGenerator : MonoBehaviour
         }
     }
 
+    void SpawnEnemyAtPlanet(PlanetNode targetPlanet)
+    {
+        if (enemyPrefab == null)
+        {
+            Debug.LogError("Enemy prefab não atribuído!");
+            return;
+        }
+
+        if (spaceship == null)
+        {
+            Debug.LogError("Spaceship ainda não foi criado!");
+            return;
+        }
+
+        GameObject enemy = Instantiate(enemyPrefab, targetPlanet.position, Quaternion.identity);
+        var ai = enemy.GetComponent<EnemyAI>();
+        if (ai != null)
+        {
+            ai.target = spaceship.transform;
+            ai.currentPlanet = targetPlanet;
+        }
+        else
+        {
+            Debug.LogError("Enemy instanciado, mas sem componente EnemyAI.");
+        }
+    }
+
+    IEnumerator SpawnEnemiesOverTime()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(10f);
+            SpawnEnemyAtPlanet(planets[Random.Range(1, planets.Count)]);
+        }
+    }
 
 
 }

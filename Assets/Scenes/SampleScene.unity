@@ -395,6 +395,7 @@ MonoBehaviour:
   maxConnectionsPerPlanet: 5
   spaceshipPrefab: {fileID: 5134123230548329178, guid: 3a4e610d49ee25543939cbf0bb4bd057, type: 3}
   spaceshipSpeed: 20
+  enemyPrefab: {fileID: 5625088769001353433, guid: 67bab68a26ea7594e9bc1fabaede3395, type: 3}
 --- !u!4 &1953861223
 Transform:
   m_ObjectHideFlags: 0

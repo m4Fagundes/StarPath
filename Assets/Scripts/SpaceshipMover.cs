@@ -6,7 +6,7 @@ public class SpaceshipMover : MonoBehaviour
     public PlanetNode currentPlanet;
     public PlanetNode previousPlanet;
     public PlanetNode targetPlanet;
-    public float travelSpeed = 10f;
+    public float travelSpeed = 20f;
 
     private bool isMoving = false;
 
@@ -15,7 +15,7 @@ public class SpaceshipMover : MonoBehaviour
             ? (currentPlanet.position - previousPlanet.position).normalized
             : Vector2.right;
 
-    public Vector2 IntendedTravelDirection  {get; private set;} = Vector2.zero;
+    public Vector2 IntendedTravelDirection { get; private set; } = Vector2.zero;
 
     public void TravelTo(PlanetNode destination)
     {
@@ -31,7 +31,7 @@ public class SpaceshipMover : MonoBehaviour
             return;
         }
 
-        IntendedTravelDirection  = (destination.position - currentPlanet.position).normalized;
+        IntendedTravelDirection = (destination.position - currentPlanet.position).normalized;
 
         StartCoroutine(MoveToPlanet(destination));
     }
@@ -74,6 +74,15 @@ public class SpaceshipMover : MonoBehaviour
         isMoving = false;
 
         EnableNeighbors(currentPlanet);
+
+        EnemyAI[] enemies = FindObjectsOfType<EnemyAI>();
+        foreach (EnemyAI enemy in enemies)
+        {
+            enemy.UpdateTargetPlanet(currentPlanet);
+        }
+
+        FindObjectOfType<SpaceGraphGenerator>().GenerateNewArea(destination.position);
+
     }
 
 
