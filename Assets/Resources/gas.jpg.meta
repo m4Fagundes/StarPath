@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 1d0f9f09c022feb42b55b7523dd2cffd
+guid: 75beeace4626a3c4a85ede61a679e5c2
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1365200762943260536
-    second: space_bk_0
+      213: -2827147315405241775
+    second: gas_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: space_bk_0
+      name: gas_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 3840
-        height: 2160
+        width: 250
+        height: 230
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 888bca5a325dd0de0800000000000000
-      internalID: -1365200762943260536
+      spriteID: 1524299de74f3c8d0800000000000000
+      internalID: -2827147315405241775
       vertices: []
       indices: 
       edges: []
