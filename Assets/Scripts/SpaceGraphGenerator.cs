@@ -47,6 +47,7 @@ public class SpaceGraphGenerator : MonoBehaviour
 
         spawnArea = new Vector2(width, height);
     }
+    
 
     public void RegisterPlanetVisit(PlanetNode planet)
     {
