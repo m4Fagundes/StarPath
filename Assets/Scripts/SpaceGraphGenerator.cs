@@ -6,10 +6,12 @@ public class SpaceGraphGenerator : MonoBehaviour
 {
     [Header("Graph Settings")]
     public int initialPlanetCount = 30;
+    private HashSet<int> visitedPlanetIds = new HashSet<int>();
     public int maxPlanets = 1000;
     public float connectionDistance = 50f;
     public Vector2 spawnArea = new Vector2(100, 100);
     public float generationThreshold = 10f;
+    private int planetVisitCount = 0;
 
     [Header("Planet Settings")]
     public GameObject planetPrefab;
@@ -46,6 +48,20 @@ public class SpaceGraphGenerator : MonoBehaviour
         spawnArea = new Vector2(width, height);
     }
 
+    public void RegisterPlanetVisit(PlanetNode planet)
+    {
+        if (!visitedPlanetIds.Contains(planet.id))
+        {
+            visitedPlanetIds.Add(planet.id);
+            planetVisitCount++;
+
+            if (planetVisitCount >= 3)
+            {
+                planetVisitCount = 0;
+                SpawnEnemyAtPlanet(planets[Random.Range(0, planets.Count)]);
+            }
+        }
+    }
 
     void LoadPlanetSprites()
     {
@@ -289,7 +305,7 @@ public class SpaceGraphGenerator : MonoBehaviour
 
     void EnableNeighbors(PlanetNode current)
     {
-        PlanetClick[] allPlanets = FindObjectsOfType<PlanetClick>();
+        PlanetClick[] allPlanets = Object.FindObjectsByType<PlanetClick>(FindObjectsSortMode.None);
 
         foreach (PlanetClick pc in allPlanets)
         {
@@ -330,9 +346,13 @@ public class SpaceGraphGenerator : MonoBehaviour
         while (true)
         {
             yield return new WaitForSeconds(10f);
-            SpawnEnemyAtPlanet(planets[Random.Range(1, planets.Count)]);
+
+            PlanetNode randomPlanet = null;
+            if (planets.Count > 1)
+                randomPlanet = planets[Random.Range(1, planets.Count)];
+
+            if(randomPlanet != null)
+                SpawnEnemyAtPlanet(randomPlanet);
         }
     }
-
-
 }

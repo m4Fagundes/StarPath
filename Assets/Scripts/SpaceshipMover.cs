@@ -7,6 +7,7 @@ public class SpaceshipMover : MonoBehaviour
     public PlanetNode previousPlanet;
     public PlanetNode targetPlanet;
     public float travelSpeed = 20f;
+    public int planetVisitCount = 0;
 
     private bool isMoving = false;
 
@@ -32,8 +33,17 @@ public class SpaceshipMover : MonoBehaviour
         }
 
         IntendedTravelDirection = (destination.position - currentPlanet.position).normalized;
-
         StartCoroutine(MoveToPlanet(destination));
+    }
+
+    void OnArriveAtPlanet(PlanetNode planet)
+    {
+        currentPlanet = planet;
+        var generator = Object.FindFirstObjectByType<SpaceGraphGenerator>();
+        if (generator != null)
+        {
+            generator.RegisterPlanetVisit(planet);
+        }
     }
 
     IEnumerator MoveToPlanet(PlanetNode destination)
@@ -50,7 +60,7 @@ public class SpaceshipMover : MonoBehaviour
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
 
-        SpaceGraphGenerator generator = FindObjectOfType<SpaceGraphGenerator>();
+        SpaceGraphGenerator generator = Object.FindFirstObjectByType<SpaceGraphGenerator>();
         Vector3 lastGenerationPos = transform.position;
 
         while (Vector3.Distance(transform.position, end) > 0.05f)
@@ -72,25 +82,30 @@ public class SpaceshipMover : MonoBehaviour
         previousPlanet = currentPlanet;
         currentPlanet = destination;
         isMoving = false;
+        planetVisitCount++;
+
+        OnArriveAtPlanet(currentPlanet);
 
         EnableNeighbors(currentPlanet);
 
-        EnemyAI[] enemies = FindObjectsOfType<EnemyAI>();
+
+        EnemyAI[] enemies = Object.FindObjectsByType<EnemyAI>(FindObjectsSortMode.None);
         foreach (EnemyAI enemy in enemies)
         {
             enemy.UpdateTargetPlanet(currentPlanet);
         }
 
-        FindObjectOfType<SpaceGraphGenerator>().GenerateNewArea(destination.position);
-
+        if (generator != null)
+        {
+            generator.GenerateNewArea(destination.position);
+        }
     }
-
 
     void EnableNeighbors(PlanetNode current)
     {
         if (current == null || current.neighbors == null) return;
 
-        PlanetClick[] allPlanets = FindObjectsOfType<PlanetClick>();
+        PlanetClick[] allPlanets = Object.FindObjectsByType<PlanetClick>(FindObjectsSortMode.None);
 
         foreach (PlanetClick pc in allPlanets)
         {
