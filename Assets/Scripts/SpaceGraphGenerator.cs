@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class SpaceGraphGenerator : MonoBehaviour
 {
+    Animator animator;
+
     [Header("Graph Settings")]
     public int initialPlanetCount = 30;
     public int maxPlanets = 1000;
@@ -30,6 +32,7 @@ public class SpaceGraphGenerator : MonoBehaviour
 
     void Start()
     {
+        animator = GetComponent<Animator>();
         SetSpawnAreaToCameraView();
         LoadPlanetSprites();
         GenerateInitialGraph();
@@ -46,19 +49,19 @@ public class SpaceGraphGenerator : MonoBehaviour
         spawnArea = new Vector2(width, height);
     }
 
-
     void LoadPlanetSprites()
     {
+        // Carrega sprites na ordem: Verde, Amarelo, Vermelho
         planetSprites = new Sprite[3];
-        planetSprites[0] = Resources.Load<Sprite>("PlanetaAmarelo");
-        planetSprites[1] = Resources.Load<Sprite>("PlanetaVerde");
+        planetSprites[0] = Resources.Load<Sprite>("PlanetaVerde");
+        planetSprites[1] = Resources.Load<Sprite>("PlanetaAmarelo");
         planetSprites[2] = Resources.Load<Sprite>("PlanetaVermelho");
 
         for (int i = 0; i < planetSprites.Length; i++)
         {
             if (planetSprites[i] == null)
             {
-                Debug.LogWarning($"Sprite Planeta {i} não foi carregado.");
+                Debug.LogWarning($"Sprite Planeta index {i} não foi carregado.");
             }
         }
     }
@@ -144,10 +147,34 @@ public class SpaceGraphGenerator : MonoBehaviour
         GameObject planetObj = Instantiate(planetPrefab, position, Quaternion.identity, this.transform);
         planetObj.name = $"Planet_{planets.Count}";
 
+        // Definindo tipo aleatório e sprite
+        int typeIndex = Random.Range(0, planetSprites.Length);
         var renderer = planetObj.GetComponent<SpriteRenderer>();
-        if (renderer != null && planetSprites.Length > 0)
+        if (renderer != null)
         {
-            renderer.sprite = planetSprites[Random.Range(0, planetSprites.Length)];
+            renderer.sprite = planetSprites[typeIndex];
+        }
+
+        // Aplicando animação de acordo com o tipo
+        Animator planetAnimator = planetObj.GetComponent<Animator>();
+        if (planetAnimator != null)
+        {
+            switch (typeIndex)
+            {
+                case 0:
+                    planetAnimator.Play("GreenPlanet");
+                    break;
+                case 1:
+                    planetAnimator.Play("YellowPlanet");
+                    break;
+                case 2:
+                    planetAnimator.Play("RedPlanet");
+                    break;
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Prefab de planeta não possui Animator");
         }
 
         PlanetNode node = new PlanetNode(planets.Count, position, planetObj);
@@ -333,6 +360,5 @@ public class SpaceGraphGenerator : MonoBehaviour
             SpawnEnemyAtPlanet(planets[Random.Range(1, planets.Count)]);
         }
     }
-
 
 }
