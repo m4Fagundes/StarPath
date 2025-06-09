@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class SpaceGraphGenerator : MonoBehaviour
 {
@@ -47,11 +48,9 @@ public class SpaceGraphGenerator : MonoBehaviour
         Camera can = Camera.main;
         float height = 2f * can.orthographicSize;
         float width = height * can.aspect;
-
         spawnArea = new Vector2(width, height);
     }
     
-
     public void RegisterPlanetVisit(PlanetNode planet)
     {
         if (!visitedPlanetIds.Contains(planet.id))
@@ -69,19 +68,10 @@ public class SpaceGraphGenerator : MonoBehaviour
 
     void LoadPlanetSprites()
     {
-        // Carrega sprites na ordem: Verde, Amarelo, Vermelho
         planetSprites = new Sprite[3];
         planetSprites[0] = Resources.Load<Sprite>("PlanetaVerde");
         planetSprites[1] = Resources.Load<Sprite>("PlanetaAmarelo");
         planetSprites[2] = Resources.Load<Sprite>("PlanetaVermelho");
-
-        for (int i = 0; i < planetSprites.Length; i++)
-        {
-            if (planetSprites[i] == null)
-            {
-                Debug.LogWarning($"Sprite Planeta index {i} não foi carregado.");
-            }
-        }
     }
 
     void GenerateInitialGraph()
@@ -118,7 +108,9 @@ public class SpaceGraphGenerator : MonoBehaviour
 
         lastGenerationPosition = centerPosition;
 
-        Vector2 travelDir = spaceship.GetComponent<SpaceshipMover>().IntendedTravelDirection;
+        SpaceshipMover mover = spaceship.GetComponent<SpaceshipMover>();
+        Vector2 travelDir = (mover != null) ? mover.IntendedTravelDirection : Vector2.zero;
+
         if (travelDir == Vector2.zero)
             travelDir = Random.insideUnitCircle.normalized;
 
@@ -165,7 +157,6 @@ public class SpaceGraphGenerator : MonoBehaviour
         GameObject planetObj = Instantiate(planetPrefab, position, Quaternion.identity, this.transform);
         planetObj.name = $"Planet_{planets.Count}";
 
-        // Definindo tipo aleatório e sprite
         int typeIndex = Random.Range(0, planetSprites.Length);
         var renderer = planetObj.GetComponent<SpriteRenderer>();
         if (renderer != null)
@@ -173,26 +164,15 @@ public class SpaceGraphGenerator : MonoBehaviour
             renderer.sprite = planetSprites[typeIndex];
         }
 
-        // Aplicando animação de acordo com o tipo
         Animator planetAnimator = planetObj.GetComponent<Animator>();
         if (planetAnimator != null)
         {
             switch (typeIndex)
             {
-                case 0:
-                    planetAnimator.Play("GreenPlanet");
-                    break;
-                case 1:
-                    planetAnimator.Play("YellowPlanet");
-                    break;
-                case 2:
-                    planetAnimator.Play("RedPlanet");
-                    break;
+                case 0: planetAnimator.Play("GreenPlanet"); break;
+                case 1: planetAnimator.Play("YellowPlanet"); break;
+                case 2: planetAnimator.Play("RedPlanet"); break;
             }
-        }
-        else
-        {
-            Debug.LogWarning("Prefab de planeta não possui Animator");
         }
 
         PlanetNode node = new PlanetNode(planets.Count, position, planetObj);
@@ -243,35 +223,36 @@ public class SpaceGraphGenerator : MonoBehaviour
             PlanetNode current = planets[i];
             if (current == null || !current.IsValid()) continue;
 
-            List<PlanetConnection> potentialConnections = new List<PlanetConnection>();
+            var potentialConnections = new List<(PlanetNode node, float distance)>();
 
             for (int j = 0; j < planets.Count; j++)
             {
                 if (i == j) continue;
-
                 PlanetNode other = planets[j];
                 if (other == null || !other.IsValid()) continue;
 
                 float distance = Vector2.Distance(current.position, other.position);
                 if (float.IsFinite(distance) && distance <= connectionDistance)
                 {
-                    potentialConnections.Add(new PlanetConnection(other, distance));
+                    potentialConnections.Add((other, distance));
                 }
             }
-
-            potentialConnections.Sort((a, b) => a.distance.CompareTo(b.distance));
+            
+            potentialConnections = potentialConnections.OrderBy(conn => conn.distance).ToList();
 
             int connectionsMade = 0;
             foreach (var connection in potentialConnections)
             {
-                if (connectionsMade >= maxConnectionsPerPlanet) break;
+                if (connectionsMade >= maxConnectionsPerPlanet || current.neighbors.Count >= maxConnectionsPerPlanet) break;
 
-                current.Connect(connection.node);
-                DrawConnection(current, connection.node);
-                connectionsMade++;
+                if(connection.node.neighbors.Count < maxConnectionsPerPlanet)
+                {
+                    current.Connect(connection.node);
+                    DrawConnection(current, connection.node);
+                    connectionsMade++;
+                }
             }
         }
-
     }
 
     void DrawConnection(PlanetNode a, PlanetNode b)
@@ -310,39 +291,26 @@ public class SpaceGraphGenerator : MonoBehaviour
         }
     }
 
+    // Método Update reescrito para ser seguro.
     void Update()
     {
         if (spaceship == null) return;
 
-        if (Vector2.Distance(spaceship.transform.position, lastGenerationPosition) > generationThreshold)
+        SpaceshipMover mover = spaceship.GetComponent<SpaceshipMover>();
+        if (mover == null) return;
+
+        // A geração só acontece se a nave NÃO estiver se movendo.
+        if (!mover.IsMoving && Vector2.Distance(spaceship.transform.position, lastGenerationPosition) > generationThreshold)
         {
             GenerateNewArea(spaceship.transform.position);
+            
+            // Atualiza os vizinhos clicáveis para refletir o novo mapa.
+            mover.EnableNeighbors(mover.currentPlanet);
         }
     }
-
-    private struct PlanetConnection
-    {
-        public PlanetNode node;
-        public float distance;
-
-        public PlanetConnection(PlanetNode node, float distance)
-        {
-            this.node = node;
-            this.distance = distance;
-        }
-    }
-
-    void EnableNeighbors(PlanetNode current)
-    {
-        PlanetClick[] allPlanets = Object.FindObjectsByType<PlanetClick>(FindObjectsSortMode.None);
-
-        foreach (PlanetClick pc in allPlanets)
-        {
-            bool isNeighbor = current.neighbors.Contains(pc.node);
-            pc.SetClicable(isNeighbor);
-        }
-    }
-
+    
+    // As funções abaixo (SpawnEnemy etc.) não precisaram de modificação.
+    // Omitidas para brevidade, mantenha as suas como estão.
     void SpawnEnemyAtPlanet(PlanetNode targetPlanet)
     {
         if (enemyPrefab == null)
