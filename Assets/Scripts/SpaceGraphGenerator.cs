@@ -83,10 +83,9 @@ public class SpaceGraphGenerator : MonoBehaviour
 
         int attempts = 0;
         int created = 0;
-        int maxAttempts = initialPlanetCount * 20; // Aumentei um pouco as tentativas por segurança
+        int maxAttempts = initialPlanetCount * 20;
 
-        // MUDANÇA: Criamos uma área de spawn maior apenas para a geração inicial.
-        float initialSpawnMultiplier = 2.5f; // Aumente este valor se ainda não gerar todos os 60.
+        float initialSpawnMultiplier = 2.5f;
         float spawnAreaX = spawnArea.x * initialSpawnMultiplier;
         float spawnAreaY = spawnArea.y * initialSpawnMultiplier;
 
