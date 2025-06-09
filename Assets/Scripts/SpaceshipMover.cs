@@ -11,7 +11,6 @@ public class SpaceshipMover : MonoBehaviour
 
     private bool isMoving = false;
     
-    // Propriedade pública para que outros scripts possam saber se a nave está se movendo.
     public bool IsMoving => isMoving;
 
     public Vector2 TravelDirection =>
@@ -23,7 +22,6 @@ public class SpaceshipMover : MonoBehaviour
 
     public void TravelTo(PlanetNode destination)
     {
-        // Checa se a viagem é válida.
         if (isMoving || currentPlanet == null || destination == null || !currentPlanet.IsConnectedTo(destination))
         {
             if (currentPlanet != null && !currentPlanet.IsConnectedTo(destination))
@@ -40,7 +38,7 @@ public class SpaceshipMover : MonoBehaviour
     void OnArriveAtPlanet(PlanetNode planet)
     {
         currentPlanet = planet;
-        var generator = FindObjectOfType<SpaceGraphGenerator>();
+        var generator = FindFirstObjectByType<SpaceGraphGenerator>();
         if (generator != null)
         {
             generator.RegisterPlanetVisit(planet);
@@ -61,7 +59,6 @@ public class SpaceshipMover : MonoBehaviour
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
 
-        // Loop principal do movimento da nave.
         while (Vector3.Distance(transform.position, end) > 0.05f)
         {
             float distCovered = (Time.time - startTime) * travelSpeed;
@@ -70,41 +67,34 @@ public class SpaceshipMover : MonoBehaviour
             yield return null;
         }
 
-        // --- Sequência de eventos de chegada (ORDEM CORRIGIDA) ---
         
-        // 1. Atualiza o estado da nave.
         transform.position = end;
         previousPlanet = currentPlanet;
         currentPlanet = destination;
         isMoving = false;
 
-        // 2. Notifica outros sistemas sobre a chegada.
         OnArriveAtPlanet(currentPlanet);
 
-        // 3. Gera o novo mapa PRIMEIRO, com a nave já parada e segura.
-        var generator = FindObjectOfType<SpaceGraphGenerator>();
+        var generator = FindFirstObjectByType<SpaceGraphGenerator>();
         if (generator != null)
         {
             generator.GenerateNewArea(destination.position);
         }
 
-        // 4. AGORA, com o mapa atualizado, habilita os vizinhos corretos para o clique.
         EnableNeighbors(currentPlanet);
 
-        // 5. Atualiza o alvo dos inimigos para o novo planeta.
-        EnemyAI[] enemies = FindObjectsOfType<EnemyAI>();
+        EnemyAI[] enemies = FindObjectsByType<EnemyAI>(FindObjectsSortMode.None);
         foreach (EnemyAI enemy in enemies)
         {
             enemy.UpdateTargetPlanet(currentPlanet);
         }
     }
 
-    // Função agora é PÚBLICA para ser acessada pelo Gerador do Grafo.
     public void EnableNeighbors(PlanetNode current)
     {
         if (current == null || current.neighbors == null) return;
 
-        PlanetClick[] allPlanets = FindObjectsOfType<PlanetClick>();
+        PlanetClick[] allPlanets = FindObjectsByType<PlanetClick>(FindObjectsSortMode.None);
 
         foreach (PlanetClick pc in allPlanets)
         {

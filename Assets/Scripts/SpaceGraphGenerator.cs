@@ -8,10 +8,10 @@ public class SpaceGraphGenerator : MonoBehaviour
     Animator animator;
 
     [Header("Graph Settings")]
-    public int initialPlanetCount = 30;
+    public int initialPlanetCount = 60;
     private HashSet<int> visitedPlanetIds = new HashSet<int>();
     public int maxPlanets = 1000;
-    public float connectionDistance = 50f;
+    public float connectionDistance = 80f; 
     public Vector2 spawnArea = new Vector2(100, 100);
     public float generationThreshold = 10f;
     private int planetVisitCount = 0;
@@ -19,7 +19,7 @@ public class SpaceGraphGenerator : MonoBehaviour
     [Header("Planet Settings")]
     public GameObject planetPrefab;
     public Sprite[] planetSprites;
-    public float planetSpacing = 100f;
+    public float planetSpacing = 150f;
     public int maxConnectionsPerPlanet = 3;
 
     [Header("Spaceship Settings")]
@@ -40,7 +40,9 @@ public class SpaceGraphGenerator : MonoBehaviour
         LoadPlanetSprites();
         GenerateInitialGraph();
         CreateSpaceship();
-        SpawnEnemyAtPlanet(planets[Random.Range(1, planets.Count)]);
+        if (planets.Count > 1) {
+            SpawnEnemyAtPlanet(planets[Random.Range(1, planets.Count)]);
+        }
     }
 
     void SetSpawnAreaToCameraView()
@@ -81,13 +83,18 @@ public class SpaceGraphGenerator : MonoBehaviour
 
         int attempts = 0;
         int created = 0;
-        int maxAttempts = initialPlanetCount * 10;
+        int maxAttempts = initialPlanetCount * 20; // Aumentei um pouco as tentativas por segurança
+
+        // MUDANÇA: Criamos uma área de spawn maior apenas para a geração inicial.
+        float initialSpawnMultiplier = 2.5f; // Aumente este valor se ainda não gerar todos os 60.
+        float spawnAreaX = spawnArea.x * initialSpawnMultiplier;
+        float spawnAreaY = spawnArea.y * initialSpawnMultiplier;
 
         while (created < initialPlanetCount && attempts < maxAttempts)
         {
             Vector2 randomPos = new Vector2(
-                Random.Range(-spawnArea.x / 2, spawnArea.x / 2),
-                Random.Range(-spawnArea.y / 2, spawnArea.y / 2)
+                Random.Range(-spawnAreaX / 2, spawnAreaX / 2),
+                Random.Range(-spawnAreaY / 2, spawnAreaY / 2)
             );
 
             if (IsFarEnough(randomPos))
@@ -97,6 +104,8 @@ public class SpaceGraphGenerator : MonoBehaviour
             }
             attempts++;
         }
+
+        Debug.Log($"Geração inicial concluída. Planetas criados: {created} (Tentativa era de {initialPlanetCount})");
 
         ValidateGraph();
         ConnectPlanets();
@@ -114,7 +123,7 @@ public class SpaceGraphGenerator : MonoBehaviour
         if (travelDir == Vector2.zero)
             travelDir = Random.insideUnitCircle.normalized;
 
-        int planetsToGenerate = 10;
+        int planetsToGenerate = 25;
         float generationRadius = spawnArea.x * 0.8f;
 
         int tries = 0;
@@ -202,26 +211,12 @@ public class SpaceGraphGenerator : MonoBehaviour
 
     void ConnectPlanets()
     {
-        foreach (var planet in planets)
-        {
-            if (planet != null)
-            {
-                planet.DisconnectAll();
-            }
-        }
-
-        foreach (Transform child in transform)
-        {
-            if (child.name == "Connection")
-            {
-                Destroy(child.gameObject);
-            }
-        }
-
         for (int i = 0; i < planets.Count; i++)
         {
             PlanetNode current = planets[i];
             if (current == null || !current.IsValid()) continue;
+            
+            if (current.neighbors.Count >= maxConnectionsPerPlanet) continue;
 
             var potentialConnections = new List<(PlanetNode node, float distance)>();
 
@@ -230,25 +225,30 @@ public class SpaceGraphGenerator : MonoBehaviour
                 if (i == j) continue;
                 PlanetNode other = planets[j];
                 if (other == null || !other.IsValid()) continue;
-
-                float distance = Vector2.Distance(current.position, other.position);
-                if (float.IsFinite(distance) && distance <= connectionDistance)
+                
+                if (other.neighbors.Count < maxConnectionsPerPlanet)
                 {
-                    potentialConnections.Add((other, distance));
+                    float distance = Vector2.Distance(current.position, other.position);
+                    if (float.IsFinite(distance) && distance <= connectionDistance)
+                    {
+                        potentialConnections.Add((other, distance));
+                    }
                 }
             }
             
             potentialConnections = potentialConnections.OrderBy(conn => conn.distance).ToList();
 
-            int connectionsMade = 0;
+            int connectionsMade = current.neighbors.Count;
             foreach (var connection in potentialConnections)
             {
-                if (connectionsMade >= maxConnectionsPerPlanet || current.neighbors.Count >= maxConnectionsPerPlanet) break;
+                if (connectionsMade >= maxConnectionsPerPlanet) break;
 
-                if(connection.node.neighbors.Count < maxConnectionsPerPlanet)
+                PlanetNode otherNode = connection.node;
+                
+                if (!current.IsConnectedTo(otherNode))
                 {
-                    current.Connect(connection.node);
-                    DrawConnection(current, connection.node);
+                    current.Connect(otherNode);
+                    DrawConnection(current, otherNode);
                     connectionsMade++;
                 }
             }
@@ -291,26 +291,20 @@ public class SpaceGraphGenerator : MonoBehaviour
         }
     }
 
-    // Método Update reescrito para ser seguro.
     void Update()
     {
         if (spaceship == null) return;
 
         SpaceshipMover mover = spaceship.GetComponent<SpaceshipMover>();
         if (mover == null) return;
-
-        // A geração só acontece se a nave NÃO estiver se movendo.
+        
         if (!mover.IsMoving && Vector2.Distance(spaceship.transform.position, lastGenerationPosition) > generationThreshold)
         {
             GenerateNewArea(spaceship.transform.position);
-            
-            // Atualiza os vizinhos clicáveis para refletir o novo mapa.
             mover.EnableNeighbors(mover.currentPlanet);
         }
     }
     
-    // As funções abaixo (SpawnEnemy etc.) não precisaram de modificação.
-    // Omitidas para brevidade, mantenha as suas como estão.
     void SpawnEnemyAtPlanet(PlanetNode targetPlanet)
     {
         if (enemyPrefab == null)
