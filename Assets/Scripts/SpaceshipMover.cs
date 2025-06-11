@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SpaceshipMover : MonoBehaviour
@@ -113,20 +114,26 @@ public class SpaceshipMover : MonoBehaviour
     {
         if (isDead) return;
         EnemyAI[] enemies = Object.FindObjectsByType<EnemyAI>(FindObjectsSortMode.None);
+        var toKill = new List<EnemyAI>();
         foreach (EnemyAI enemy in enemies)
         {
             if (enemy.currentPlanet == currentPlanet)
             {
-                if (currentBullets > 0)
-                {
-                    currentBullets--;
-                    KillEnemy(enemy);
-                }
-                else
-                {
-                    Die();
-                    break;
-                }
+                toKill.Add(enemy);
+            }
+        }
+        foreach (EnemyAI enemy in toKill)
+        {
+            if (isDead) break;
+            if (currentBullets > 0)
+            {
+                currentBullets--;
+                KillEnemy(enemy);
+            }
+            else
+            {
+                Die();
+                break;
             }
         }
     }
