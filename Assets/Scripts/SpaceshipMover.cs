@@ -21,6 +21,10 @@ public class SpaceshipMover : MonoBehaviour
     public float maxFuel = 100f;
     public float currentFuel = 100f;
 
+    public int maxBullets = 3;
+    public int currentBullets = 1;
+    public bool isDead = false;
+
     // Retorna o custo de gasolina para um planeta com base na cor
     public int GetFuelCost(PlanetNode planet)
     {
@@ -67,6 +71,66 @@ public class SpaceshipMover : MonoBehaviour
         StartCoroutine(MoveToPlanet(destination));
     }
 
+    // Chame este método para adicionar uma bala (ex: powerup)
+    public void AddBullet(int amount = 1)
+    {
+        currentBullets = Mathf.Min(currentBullets + amount, maxBullets);
+    }
+
+    // Chame este método quando o jogador "morrer"
+    public void Die()
+    {
+        isDead = true;
+        Debug.Log("O jogador foi destruído!");
+        // Mostra tela de game over
+        var goUI = FindObjectOfType<GameOverUI>();
+        if (goUI == null)
+        {
+            var goObj = new GameObject("GameOverUI");
+            goUI = goObj.AddComponent<GameOverUI>();
+        }
+        goUI.Show();
+        gameObject.SetActive(false);
+    }
+
+    // Chame este método quando um inimigo for morto
+    public void KillEnemy(EnemyAI enemy)
+    {
+        if (enemy != null)
+        {
+            Destroy(enemy.gameObject);
+            Debug.Log("Inimigo destruído!");
+            var generator = Object.FindFirstObjectByType<SpaceGraphGenerator>();
+            if (generator != null)
+            {
+                generator.TrySpawnEnemy();
+            }
+        }
+    }
+
+    // Verifica se há inimigos no mesmo planeta após chegar
+    void CheckCombatOnPlanet()
+    {
+        if (isDead) return;
+        EnemyAI[] enemies = Object.FindObjectsByType<EnemyAI>(FindObjectsSortMode.None);
+        foreach (EnemyAI enemy in enemies)
+        {
+            if (enemy.currentPlanet == currentPlanet)
+            {
+                if (currentBullets > 0)
+                {
+                    currentBullets--;
+                    KillEnemy(enemy);
+                }
+                else
+                {
+                    Die();
+                    break;
+                }
+            }
+        }
+    }
+
     void OnArriveAtPlanet(PlanetNode planet)
     {
         currentPlanet = planet;
@@ -75,6 +139,7 @@ public class SpaceshipMover : MonoBehaviour
         {
             generator.RegisterPlanetVisit(planet);
         }
+        CheckCombatOnPlanet();
     }
 
     IEnumerator MoveToPlanet(PlanetNode destination)

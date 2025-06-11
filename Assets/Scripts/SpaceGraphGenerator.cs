@@ -356,4 +356,16 @@ public class SpaceGraphGenerator : MonoBehaviour
                 SpawnEnemyAtPlanet(randomPlanet);
         }
     }
+
+    public void TrySpawnEnemy()
+    {
+        // Spawna um inimigo em um planeta aleatório (exceto o planeta do player)
+        if (planets.Count <= 1 || enemyPrefab == null || spaceship == null) return;
+        PlanetNode playerPlanet = spaceship.GetComponent<SpaceshipMover>()?.currentPlanet;
+        List<PlanetNode> candidates = new List<PlanetNode>(planets);
+        if (playerPlanet != null) candidates.Remove(playerPlanet);
+        if (candidates.Count == 0) return;
+        PlanetNode spawnPlanet = candidates[Random.Range(0, candidates.Count)];
+        SpawnEnemyAtPlanet(spawnPlanet);
+    }
 }

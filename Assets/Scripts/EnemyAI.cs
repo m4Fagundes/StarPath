@@ -120,4 +120,9 @@ public class EnemyAI : MonoBehaviour
             }
         }
     }
+
+    public void KillSelf()
+    {
+        Destroy(gameObject);
+    }
 }
