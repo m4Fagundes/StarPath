@@ -18,6 +18,27 @@ public class SpaceshipMover : MonoBehaviour
 
     public Vector2 IntendedTravelDirection { get; private set; } = Vector2.zero;
 
+    public float maxFuel = 100f;
+    public float currentFuel = 100f;
+
+    // Retorna o custo de gasolina para um planeta com base na cor
+    public int GetFuelCost(PlanetNode planet)
+    {
+        if (planet == null || planet.planetObject == null) return 0;
+        var renderer = planet.planetObject.GetComponent<SpriteRenderer>();
+        if (renderer == null || renderer.sprite == null) return 0;
+        string spriteName = renderer.sprite.name.ToLower();
+        if (spriteName.Contains("verde")) return 3;
+        if (spriteName.Contains("amarelo")) return 5;
+        if (spriteName.Contains("vermelho")) return 8;
+        return 5; // padrão caso não encontre
+    }
+
+    public bool HasEnoughFuel(PlanetNode destination)
+    {
+        return currentFuel >= GetFuelCost(destination);
+    }
+
     public void TravelTo(PlanetNode destination)
     {
         if (isMoving || currentPlanet == null || destination == null || currentPlanet.neighbors == null)
@@ -32,7 +53,15 @@ public class SpaceshipMover : MonoBehaviour
             return;
         }
 
+        int fuelCost = GetFuelCost(destination);
+        if (currentFuel < fuelCost)
+        {
+            Debug.LogWarning("Sem gasolina suficiente para viajar!");
+            return;
+        }
+
         IntendedTravelDirection = (destination.position - currentPlanet.position).normalized;
+        currentFuel -= fuelCost;
         StartCoroutine(MoveToPlanet(destination));
     }
 
