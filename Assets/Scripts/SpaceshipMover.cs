@@ -6,9 +6,12 @@ public class SpaceshipMover : MonoBehaviour
     public PlanetNode currentPlanet;
     public PlanetNode previousPlanet;
     public PlanetNode targetPlanet;
-    public float travelSpeed = 20f;
+    public float travelSpeed = 40f;
+    public int planetVisitCount = 0;
 
     private bool isMoving = false;
+    
+    public bool IsMoving => isMoving;
 
     public Vector2 TravelDirection =>
         (currentPlanet != null && previousPlanet != null)
@@ -19,21 +22,27 @@ public class SpaceshipMover : MonoBehaviour
 
     public void TravelTo(PlanetNode destination)
     {
-        if (isMoving || currentPlanet == null || destination == null || currentPlanet.neighbors == null)
+        if (isMoving || currentPlanet == null || destination == null || !currentPlanet.IsConnectedTo(destination))
         {
-            Debug.LogWarning("Tentativa de viagem com referência nula.");
-            return;
-        }
-
-        if (!currentPlanet.neighbors.Contains(destination))
-        {
-            Debug.LogWarning("Destino não é vizinho do planeta atual.");
+            if (currentPlanet != null && !currentPlanet.IsConnectedTo(destination))
+            {
+                 Debug.LogWarning("Destino não é mais um vizinho válido. O mapa pode ter sido atualizado.");
+            }
             return;
         }
 
         IntendedTravelDirection = (destination.position - currentPlanet.position).normalized;
-
         StartCoroutine(MoveToPlanet(destination));
+    }
+
+    void OnArriveAtPlanet(PlanetNode planet)
+    {
+        currentPlanet = planet;
+        var generator = FindFirstObjectByType<SpaceGraphGenerator>();
+        if (generator != null)
+        {
+            generator.RegisterPlanetVisit(planet);
+        }
     }
 
     IEnumerator MoveToPlanet(PlanetNode destination)
@@ -50,47 +59,42 @@ public class SpaceshipMover : MonoBehaviour
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
 
-        SpaceGraphGenerator generator = FindObjectOfType<SpaceGraphGenerator>();
-        Vector3 lastGenerationPos = transform.position;
-
         while (Vector3.Distance(transform.position, end) > 0.05f)
         {
             float distCovered = (Time.time - startTime) * travelSpeed;
             float fraction = distCovered / journeyLength;
             transform.position = Vector3.Lerp(start, end, fraction);
-
-            if (generator != null && Vector3.Distance(transform.position, lastGenerationPos) > generator.generationThreshold)
-            {
-                generator.GenerateNewArea(transform.position);
-                lastGenerationPos = transform.position;
-            }
-
             yield return null;
         }
 
+        
         transform.position = end;
         previousPlanet = currentPlanet;
         currentPlanet = destination;
         isMoving = false;
 
+        OnArriveAtPlanet(currentPlanet);
+
+        var generator = FindFirstObjectByType<SpaceGraphGenerator>();
+        if (generator != null)
+        {
+            generator.GenerateNewArea(destination.position);
+        }
+
         EnableNeighbors(currentPlanet);
 
-        EnemyAI[] enemies = FindObjectsOfType<EnemyAI>();
+        EnemyAI[] enemies = FindObjectsByType<EnemyAI>(FindObjectsSortMode.None);
         foreach (EnemyAI enemy in enemies)
         {
             enemy.UpdateTargetPlanet(currentPlanet);
         }
-
-        FindObjectOfType<SpaceGraphGenerator>().GenerateNewArea(destination.position);
-
     }
 
-
-    void EnableNeighbors(PlanetNode current)
+    public void EnableNeighbors(PlanetNode current)
     {
         if (current == null || current.neighbors == null) return;
 
-        PlanetClick[] allPlanets = FindObjectsOfType<PlanetClick>();
+        PlanetClick[] allPlanets = FindObjectsByType<PlanetClick>(FindObjectsSortMode.None);
 
         foreach (PlanetClick pc in allPlanets)
         {

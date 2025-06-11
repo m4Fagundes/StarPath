@@ -263,8 +263,8 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 50
-  m_Depth: -1
+  orthographic size: 100
+  m_Depth: -2.27
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -1005,17 +1005,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 096875582da85d44f83fec55356a222a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initialPlanetCount: 30
+  initialPlanetCount: 60
   maxPlanets: 1000
-  connectionDistance: 40
+  connectionDistance: 100
   spawnArea: {x: 100, y: 100}
   generationThreshold: 10
   planetPrefab: {fileID: 628880626194580104, guid: e2173edb7a26ea34aaa3de2f9b1805b0, type: 3}
   planetSprites: []
-  planetSpacing: 20
-  maxConnectionsPerPlanet: 5
+  planetSpacing: 60
+  maxConnectionsPerPlanet: 6
   spaceshipPrefab: {fileID: 5134123230548329178, guid: 3a4e610d49ee25543939cbf0bb4bd057, type: 3}
-  spaceshipSpeed: 20
+  spaceshipSpeed: 1
   enemyPrefab: {fileID: 5625088769001353433, guid: 67bab68a26ea7594e9bc1fabaede3395, type: 3}
 --- !u!4 &1953861223
 Transform:
