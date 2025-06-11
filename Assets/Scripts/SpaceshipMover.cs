@@ -54,14 +54,16 @@ public class SpaceshipMover : MonoBehaviour
         }
 
         int fuelCost = GetFuelCost(destination);
-        if (currentFuel < fuelCost)
+        if (currentFuel < fuelCost || currentFuel <= 0)
         {
             Debug.LogWarning("Sem gasolina suficiente para viajar!");
+            currentFuel = Mathf.Max(0, currentFuel); // nunca negativo
             return;
         }
 
         IntendedTravelDirection = (destination.position - currentPlanet.position).normalized;
         currentFuel -= fuelCost;
+        if (currentFuel < 0) currentFuel = 0;
         StartCoroutine(MoveToPlanet(destination));
     }
 
