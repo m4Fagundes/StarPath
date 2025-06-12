@@ -26,6 +26,9 @@ public class SpaceshipMover : MonoBehaviour
     public int currentBullets = 1;
     public bool isDead = false;
 
+    public int score = 0;
+    public int highScore = 0;
+
     // Retorna o custo de gasolina para um planeta com base na cor
     public int GetFuelCost(PlanetNode planet)
     {
@@ -42,6 +45,22 @@ public class SpaceshipMover : MonoBehaviour
     public bool HasEnoughFuel(PlanetNode destination)
     {
         return currentFuel >= GetFuelCost(destination);
+    }
+
+    void Start()
+    {
+        highScore = PlayerPrefs.GetInt("HighScore", 0);
+    }
+
+    void AddScore(int amount)
+    {
+        score += amount;
+        if (score > highScore)
+        {
+            highScore = score;
+            PlayerPrefs.SetInt("HighScore", highScore);
+            PlayerPrefs.Save();
+        }
     }
 
     public void TravelTo(PlanetNode destination)
@@ -65,6 +84,15 @@ public class SpaceshipMover : MonoBehaviour
             currentFuel = Mathf.Max(0, currentFuel); // nunca negativo
             return;
         }
+
+        // Score por planeta
+        int scoreToAdd = 0;
+        string spriteName = destination.planetObject?.GetComponent<SpriteRenderer>()?.sprite?.name.ToLower() ?? "";
+        if (spriteName.Contains("verde")) scoreToAdd = 1;
+        else if (spriteName.Contains("amarelo")) scoreToAdd = 2;
+        else if (spriteName.Contains("vermelho")) scoreToAdd = 3;
+        else scoreToAdd = 1;
+        AddScore(scoreToAdd);
 
         IntendedTravelDirection = (destination.position - currentPlanet.position).normalized;
         currentFuel -= fuelCost;
@@ -101,6 +129,7 @@ public class SpaceshipMover : MonoBehaviour
         {
             Destroy(enemy.gameObject);
             Debug.Log("Inimigo destruído!");
+            AddScore(30);
             var generator = Object.FindFirstObjectByType<SpaceGraphGenerator>();
             if (generator != null)
             {

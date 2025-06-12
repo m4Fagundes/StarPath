@@ -8,6 +8,7 @@ public class GameOverUI : MonoBehaviour
     private GUIStyle buttonStyle;
     private GUIStyle labelStyle;
     private GUIStyle shadowStyle;
+    private SpaceshipMover player;
 
     public void Show()
     {
@@ -27,18 +28,20 @@ public class GameOverUI : MonoBehaviour
         if (boxStyle == null || buttonStyle == null || labelStyle == null || shadowStyle == null)
             InitStyles();
 
-        // Aumentei o tamanho do retângulo (550x300)
         int width = 550, height = 300;
         Rect rect = new Rect((Screen.width - width) / 2, (Screen.height - height) / 2, width, height);
-
-        // Caixa de fundo com estilo
         GUI.Box(rect, GUIContent.none, boxStyle);
-
-        // Ajustei as posições dos textos
         GUI.Label(new Rect(rect.x + 2, rect.y + 38, rect.width, 80), "GAME OVER", shadowStyle);
         GUI.Label(new Rect(rect.x, rect.y + 35, rect.width, 80), "GAME OVER", labelStyle);
 
-        // Botão "Reiniciar" - posicionado mais abaixo
+        // Score
+        if (player == null) player = FindObjectOfType<SpaceshipMover>();
+        if (player != null)
+        {
+            string scoreText = $"Score: {player.score}\nHigh Score: {player.highScore}";
+            GUI.Label(new Rect(rect.x, rect.y + 110, rect.width, 60), scoreText, labelStyle);
+        }
+
         Rect buttonRect = new Rect(rect.x + (rect.width - 200) / 2, rect.y + 180, 200, 60);
         if (GUI.Button(buttonRect, "🔄 Reiniciar", buttonStyle))
         {
