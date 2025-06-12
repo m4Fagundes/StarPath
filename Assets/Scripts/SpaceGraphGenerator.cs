@@ -37,6 +37,12 @@ public class SpaceGraphGenerator : MonoBehaviour
         GenerateInitialGraph();
         CreateSpaceship();
         SpawnEnemyAtPlanet(planets[Random.Range(1, planets.Count)]);
+        // Garante que o ScoreUI exista
+        if (FindObjectOfType<ScoreUI>() == null)
+        {
+            var go = new GameObject("ScoreUI");
+            go.AddComponent<ScoreUI>();
+        }
     }
 
     void SetSpawnAreaToCameraView()

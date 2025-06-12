@@ -18,11 +18,17 @@ public class ScoreUI : MonoBehaviour
         shadowStyle.normal.textColor = new Color(0f, 0f, 0f, 0.7f);
     }
 
+    void Update()
+    {
+        if (player == null || !player.gameObject.activeSelf)
+        {
+            player = FindObjectOfType<SpaceshipMover>();
+        }
+    }
+
     void OnGUI()
     {
-        if (player == null) player = FindObjectOfType<SpaceshipMover>();
         if (player == null) return;
-
         string scoreText = $"Score: {player.score}\nHigh Score: {player.highScore}";
         Rect rect = new Rect(30, 20, 400, 80);
         GUI.Label(new Rect(rect.x+2, rect.y+2, rect.width, rect.height), scoreText, shadowStyle);
