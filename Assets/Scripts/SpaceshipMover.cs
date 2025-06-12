@@ -86,12 +86,18 @@ public class SpaceshipMover : MonoBehaviour
         }
 
         // Score por planeta
-        int scoreToAdd = 0;
-        string spriteName = destination.planetObject?.GetComponent<SpriteRenderer>()?.sprite?.name.ToLower() ?? "";
-        if (spriteName.Contains("verde")) scoreToAdd = 1;
-        else if (spriteName.Contains("amarelo")) scoreToAdd = 2;
-        else if (spriteName.Contains("vermelho")) scoreToAdd = 3;
-        else scoreToAdd = 1;
+        int scoreToAdd = 1;
+        if (destination != null && destination.planetObject != null)
+        {
+            var renderer = destination.planetObject.GetComponent<SpriteRenderer>();
+            if (renderer != null && renderer.sprite != null)
+            {
+                string spriteName = renderer.sprite.name.ToLower();
+                if (spriteName.Contains("verde")) scoreToAdd = 1;
+                else if (spriteName.Contains("amarelo")) scoreToAdd = 2;
+                else if (spriteName.Contains("vermelho")) scoreToAdd = 3;
+            }
+        }
         AddScore(scoreToAdd);
 
         IntendedTravelDirection = (destination.position - currentPlanet.position).normalized;
