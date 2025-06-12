@@ -20,7 +20,7 @@ public class ScoreUI : MonoBehaviour
 
     void Update()
     {
-        if (player == null || !player.gameObject.activeSelf)
+        if (player == null)
         {
             player = FindObjectOfType<SpaceshipMover>();
         }
@@ -28,6 +28,17 @@ public class ScoreUI : MonoBehaviour
 
     void OnGUI()
     {
+        if (labelStyle == null || shadowStyle == null)
+        {
+            labelStyle = new GUIStyle(GUI.skin.label);
+            labelStyle.fontSize = 32;
+            labelStyle.fontStyle = FontStyle.Bold;
+            labelStyle.normal.textColor = new Color(1f, 0.95f, 0.2f);
+            labelStyle.alignment = TextAnchor.UpperLeft;
+
+            shadowStyle = new GUIStyle(labelStyle);
+            shadowStyle.normal.textColor = new Color(0f, 0f, 0f, 0.7f);
+        }
         if (player == null) return;
         string scoreText = $"Score: {player.score}\nHigh Score: {player.highScore}";
         Rect rect = new Rect(30, 20, 400, 80);
