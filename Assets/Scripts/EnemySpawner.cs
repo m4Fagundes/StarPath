@@ -31,7 +31,7 @@ public class EnemySpawner
         }
 
         PlanetNode playerPlanet = mover.currentPlanet;
-        List<PlanetNode> candidates = GetPlanetsAtDistance(playerPlanet, 2);
+        List<PlanetNode> candidates = GetPlanetsAtDistance(playerPlanet, 2, 3);
 
         if (candidates.Count == 0)
         {
