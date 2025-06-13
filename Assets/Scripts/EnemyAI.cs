@@ -50,6 +50,21 @@ public class EnemyAI : MonoBehaviour
                 {
                     currentPlanet = nextNode;
                     nextNode = null;
+
+                    // Checa colisão defensiva com o player
+                    var player = FindObjectOfType<SpaceshipMover>();
+                    if (player != null && player.currentPlanet == currentPlanet && !player.isDead)
+                    {
+                        if (player.currentBullets > 0)
+                        {
+                            player.currentBullets--;
+                            player.KillEnemy(this);
+                        }
+                        else
+                        {
+                            player.Die();
+                        }
+                    }
                 }
             }
         }
@@ -119,5 +134,10 @@ public class EnemyAI : MonoBehaviour
                 UpdateTargetPlanet(targetPlanet);
             }
         }
+    }
+
+    public void KillSelf()
+    {
+        Destroy(gameObject);
     }
 }

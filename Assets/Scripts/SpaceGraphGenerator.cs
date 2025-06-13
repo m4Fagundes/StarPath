@@ -4,14 +4,14 @@ using UnityEngine;
 
 public class SpaceGraphGenerator : MonoBehaviour
 {
-    Animator animator;
-
     [Header("Graph Settings")]
     public int initialPlanetCount = 30;
+    private HashSet<int> visitedPlanetIds = new HashSet<int>();
     public int maxPlanets = 1000;
     public float connectionDistance = 50f;
     public Vector2 spawnArea = new Vector2(100, 100);
     public float generationThreshold = 10f;
+    private int planetVisitCount = 0;
 
     [Header("Planet Settings")]
     public GameObject planetPrefab;
@@ -32,12 +32,17 @@ public class SpaceGraphGenerator : MonoBehaviour
 
     void Start()
     {
-        animator = GetComponent<Animator>();
         SetSpawnAreaToCameraView();
         LoadPlanetSprites();
         GenerateInitialGraph();
         CreateSpaceship();
         SpawnEnemyAtPlanet(planets[Random.Range(1, planets.Count)]);
+        // Garante que o ScoreUI exista
+        if (FindObjectOfType<ScoreUI>() == null)
+        {
+            var go = new GameObject("ScoreUI");
+            go.AddComponent<ScoreUI>();
+        }
     }
 
     void SetSpawnAreaToCameraView()
@@ -48,10 +53,25 @@ public class SpaceGraphGenerator : MonoBehaviour
 
         spawnArea = new Vector2(width, height);
     }
+    
+
+    public void RegisterPlanetVisit(PlanetNode planet)
+    {
+        if (!visitedPlanetIds.Contains(planet.id))
+        {
+            visitedPlanetIds.Add(planet.id);
+            planetVisitCount++;
+
+            if (planetVisitCount >= 3)
+            {
+                planetVisitCount = 0;
+                SpawnEnemyAtPlanet(planets[Random.Range(0, 3)]);
+            }
+        }
+    }
 
     void LoadPlanetSprites()
     {
-        // Carrega sprites na ordem: Verde, Amarelo, Vermelho
         planetSprites = new Sprite[3];
         planetSprites[0] = Resources.Load<Sprite>("PlanetaVerde");
         planetSprites[1] = Resources.Load<Sprite>("PlanetaAmarelo");
@@ -61,7 +81,7 @@ public class SpaceGraphGenerator : MonoBehaviour
         {
             if (planetSprites[i] == null)
             {
-                Debug.LogWarning($"Sprite Planeta index {i} não foi carregado.");
+                Debug.LogWarning($"Sprite Planeta {i} não foi carregado.");
             }
         }
     }
@@ -147,7 +167,6 @@ public class SpaceGraphGenerator : MonoBehaviour
         GameObject planetObj = Instantiate(planetPrefab, position, Quaternion.identity, this.transform);
         planetObj.name = $"Planet_{planets.Count}";
 
-        // Definindo tipo aleatório e sprite
         int typeIndex = Random.Range(0, planetSprites.Length);
         var renderer = planetObj.GetComponent<SpriteRenderer>();
         if (renderer != null)
@@ -155,26 +174,15 @@ public class SpaceGraphGenerator : MonoBehaviour
             renderer.sprite = planetSprites[typeIndex];
         }
 
-        // Aplicando animação de acordo com o tipo
         Animator planetAnimator = planetObj.GetComponent<Animator>();
         if (planetAnimator != null)
         {
             switch (typeIndex)
             {
-                case 0:
-                    planetAnimator.Play("GreenPlanet");
-                    break;
-                case 1:
-                    planetAnimator.Play("YellowPlanet");
-                    break;
-                case 2:
-                    planetAnimator.Play("RedPlanet");
-                    break;
+                case 0: planetAnimator.Play("GreenPlanet"); break;
+                case 1: planetAnimator.Play("YellowPlanet"); break;
+                case 2: planetAnimator.Play("RedPlanet"); break;
             }
-        }
-        else
-        {
-            Debug.LogWarning("Prefab de planeta não possui Animator");
         }
 
         PlanetNode node = new PlanetNode(planets.Count, position, planetObj);
@@ -316,7 +324,7 @@ public class SpaceGraphGenerator : MonoBehaviour
 
     void EnableNeighbors(PlanetNode current)
     {
-        PlanetClick[] allPlanets = FindObjectsOfType<PlanetClick>();
+        PlanetClick[] allPlanets = Object.FindObjectsByType<PlanetClick>(FindObjectsSortMode.None);
 
         foreach (PlanetClick pc in allPlanets)
         {
@@ -357,8 +365,25 @@ public class SpaceGraphGenerator : MonoBehaviour
         while (true)
         {
             yield return new WaitForSeconds(10f);
-            SpawnEnemyAtPlanet(planets[Random.Range(1, planets.Count)]);
+
+            PlanetNode randomPlanet = null;
+            if (planets.Count > 1)
+                randomPlanet = planets[Random.Range(1, planets.Count)];
+
+            if(randomPlanet != null)
+                SpawnEnemyAtPlanet(randomPlanet);
         }
     }
 
+    public void TrySpawnEnemy()
+    {
+        // Spawna um inimigo em um planeta aleatório (exceto o planeta do player)
+        if (planets.Count <= 1 || enemyPrefab == null || spaceship == null) return;
+        PlanetNode playerPlanet = spaceship.GetComponent<SpaceshipMover>()?.currentPlanet;
+        List<PlanetNode> candidates = new List<PlanetNode>(planets);
+        if (playerPlanet != null) candidates.Remove(playerPlanet);
+        if (candidates.Count == 0) return;
+        PlanetNode spawnPlanet = candidates[Random.Range(0, candidates.Count)];
+        SpawnEnemyAtPlanet(spawnPlanet);
+    }
 }
