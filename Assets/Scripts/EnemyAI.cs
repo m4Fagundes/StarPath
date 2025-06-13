@@ -6,7 +6,7 @@ public class EnemyAI : MonoBehaviour
 {
     public PlanetNode currentPlanet;
     private PlanetNode targetPlanet;
-    public float speed = 100f;
+    public float speed = 6f;
 
     private PlanetNode nextNode;
 
