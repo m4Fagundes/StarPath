@@ -53,7 +53,7 @@ public class SpaceGraphGenerator : MonoBehaviour
 
         spawnArea = new Vector2(width, height);
     }
-    
+
 
     public void RegisterPlanetVisit(PlanetNode planet)
     {
@@ -341,18 +341,19 @@ public class SpaceGraphGenerator : MonoBehaviour
             return;
         }
 
-        if (spaceship == null)
-        {
-            Debug.LogError("Spaceship ainda não foi criado!");
-            return;
-        }
+        GameObject enemyObj = Instantiate(enemyPrefab, targetPlanet.position, Quaternion.identity);
+        EnemyAI ai = enemyObj.GetComponent<EnemyAI>();
 
-        GameObject enemy = Instantiate(enemyPrefab, targetPlanet.position, Quaternion.identity);
-        var ai = enemy.GetComponent<EnemyAI>();
         if (ai != null)
         {
             ai.target = spaceship.transform;
             ai.currentPlanet = targetPlanet;
+
+            
+            int choice = Random.Range(0, 2);
+            ai.algorithmType = (SearchAlgorithmType)choice;
+
+            Debug.Log($"Inimigo criado com o algoritmo: {ai.algorithmType}"); 
         }
         else
         {
@@ -370,7 +371,7 @@ public class SpaceGraphGenerator : MonoBehaviour
             if (planets.Count > 1)
                 randomPlanet = planets[Random.Range(1, planets.Count)];
 
-            if(randomPlanet != null)
+            if (randomPlanet != null)
                 SpawnEnemyAtPlanet(randomPlanet);
         }
     }
