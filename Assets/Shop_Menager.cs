@@ -20,7 +20,15 @@ public class Shop_Menager : MonoBehaviour
         var player = FindObjectOfType<SpaceshipMover>();
         if(player != null)
         {
-            player.currentBullets++;
+            if(player.coins > 3)
+            {
+                player.currentBullets++;
+                player.coins -= 3;
+                PlayerPrefs.SetInt("Coins", player.coins);
+                PlayerPrefs.Save();
+                PlayerPrefs.SetInt("Bullets", player.currentBullets);
+                PlayerPrefs.Save();
+            }         
         }
     }
 
@@ -29,7 +37,13 @@ public class Shop_Menager : MonoBehaviour
         var player = FindObjectOfType<SpaceshipMover>();
         if (player != null)
         {
-            player.currentFuel++;
-        }
+            if (player.coins >= 5)
+            {
+                player.currentFuel++;
+                player.coins -= 5;
+                PlayerPrefs.SetInt("Coins", player.coins);
+                PlayerPrefs.Save();
+            }
+        }              
     }
 }

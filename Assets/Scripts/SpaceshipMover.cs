@@ -29,6 +29,8 @@ public class SpaceshipMover : MonoBehaviour
     public int score = 0;
     public int highScore = 0;
 
+    public int coins = 0;
+
     // Retorna o custo de gasolina para um planeta com base na cor
     public int GetFuelCost(PlanetNode planet)
     {
@@ -50,6 +52,10 @@ public class SpaceshipMover : MonoBehaviour
     void Start()
     {
         highScore = PlayerPrefs.GetInt("HighScore", 0);
+        coins = 0;
+        coins = PlayerPrefs.GetInt("Coins", 0);
+        currentBullets = 1;
+        currentBullets = PlayerPrefs.GetInt("Bullets", 1);
     }
 
     void AddScore(int amount)
@@ -116,6 +122,8 @@ public class SpaceshipMover : MonoBehaviour
     public void Die()
     {
         isDead = true;
+        coins = 0;
+        currentBullets = 1;
         Debug.Log("O jogador foi destruído!");
         // Mostra tela de game over
         var goUI = FindObjectOfType<GameOverUI>();
@@ -135,7 +143,7 @@ public class SpaceshipMover : MonoBehaviour
         {
             Destroy(enemy.gameObject);
             Debug.Log("Inimigo destruído!");
-            AddScore(30);
+            AddScore(5);
             var generator = Object.FindFirstObjectByType<SpaceGraphGenerator>();
             if (generator != null)
             {
@@ -162,7 +170,12 @@ public class SpaceshipMover : MonoBehaviour
             if (isDead) break;
             if (currentBullets > 0)
             {
+                coins++;
                 currentBullets--;
+                PlayerPrefs.SetInt("Coins", coins);
+                PlayerPrefs.Save();
+                PlayerPrefs.SetInt("Bullets", currentBullets);
+                PlayerPrefs.Save();
                 KillEnemy(enemy);
             }
             else
@@ -179,6 +192,9 @@ public class SpaceshipMover : MonoBehaviour
         var generator = Object.FindFirstObjectByType<SpaceGraphGenerator>();
         if (generator != null)
         {
+            coins++;
+            PlayerPrefs.SetInt("Coins", coins);
+            PlayerPrefs.Save();
             generator.RegisterPlanetVisit(planet);
         }
         CheckCombatOnPlanet();

@@ -40,8 +40,8 @@ public class ScoreUI : MonoBehaviour
             shadowStyle.normal.textColor = new Color(0f, 0f, 0f, 0.7f);
         }
         if (player == null) return;
-        string scoreText = $"Score: {player.score}\nHigh Score: {player.highScore}";
-        Rect rect = new Rect(30, 20, 400, 80);
+        string scoreText = $"Score: {player.score}\nHigh Score: {player.highScore}\nCoins: {player.coins}\nBullets: {player.currentBullets}";
+        Rect rect = new Rect(30, 20, 400, 200);
         GUI.Label(new Rect(rect.x+2, rect.y+2, rect.width, rect.height), scoreText, shadowStyle);
         GUI.Label(rect, scoreText, labelStyle);
     }

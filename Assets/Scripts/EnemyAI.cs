@@ -15,7 +15,7 @@ public class EnemyAI : MonoBehaviour
     public SearchAlgorithmType algorithmType;
     public PlanetNode currentPlanet;
     private PlanetNode targetPlanet;
-    public float speed = 100f;
+    public float speed = 60f;
 
     private PlanetNode nextNode;
 
