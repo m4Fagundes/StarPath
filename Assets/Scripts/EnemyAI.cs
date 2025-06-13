@@ -2,8 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum SearchAlgorithmType
+{
+    Greedy,
+    AStar
+}
+
+
 public class EnemyAI : MonoBehaviour
 {
+
+    public SearchAlgorithmType algorithmType;
     public PlanetNode currentPlanet;
     private PlanetNode targetPlanet;
     public float speed = 100f;
@@ -44,7 +53,7 @@ public class EnemyAI : MonoBehaviour
                 transform.position = Vector2.MoveTowards(transform.position, nextNode.position, speed * Time.deltaTime);
 
                 float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-                transform.rotation = Quaternion.Euler(0, 0, angle - 0f); 
+                transform.rotation = Quaternion.Euler(0, 0, angle - 0f);
 
                 if (Vector2.Distance(transform.position, nextNode.position) < 0.05f)
                 {
@@ -73,12 +82,16 @@ public class EnemyAI : MonoBehaviour
     void CalculatePathToTarget()
     {
         path.Clear();
-        HashSet<PlanetNode> visited = new HashSet<PlanetNode>();
-        PriorityQueue<PlanetNode> frontier = new PriorityQueue<PlanetNode>();
-        Dictionary<PlanetNode, PlanetNode> cameFrom = new Dictionary<PlanetNode, PlanetNode>();
+        if (currentPlanet == null || targetPlanet == null) return;
 
-        frontier.Enqueue(currentPlanet, Heuristic(currentPlanet, targetPlanet));
-        visited.Add(currentPlanet);
+        PriorityQueue<PlanetNode> frontier = new PriorityQueue<PlanetNode>();
+        frontier.Enqueue(currentPlanet, 0);
+
+        Dictionary<PlanetNode, PlanetNode> cameFrom = new Dictionary<PlanetNode, PlanetNode>();
+        Dictionary<PlanetNode, float> costSoFar = new Dictionary<PlanetNode, float>();
+
+        cameFrom[currentPlanet] = null;
+        costSoFar[currentPlanet] = 0;
 
         while (!frontier.IsEmpty)
         {
@@ -89,25 +102,41 @@ public class EnemyAI : MonoBehaviour
 
             foreach (PlanetNode neighbor in current.neighbors)
             {
-                if (!visited.Contains(neighbor))
+                float newCost = costSoFar[current] + Vector2.Distance(current.position, neighbor.position);
+
+                if (!costSoFar.ContainsKey(neighbor) || newCost < costSoFar[neighbor])
                 {
-                    visited.Add(neighbor);
-                    cameFrom[neighbor] = current;
-                    float priority = Heuristic(neighbor, targetPlanet);
+                    costSoFar[neighbor] = newCost;
+
+                    float priority;
+                    if (algorithmType == SearchAlgorithmType.Greedy)
+                    {
+                        priority = Heuristic(neighbor, targetPlanet);
+                    }
+                    else
+                    {
+                        priority = newCost + Heuristic(neighbor, targetPlanet);
+                    }
+
                     frontier.Enqueue(neighbor, priority);
+                    cameFrom[neighbor] = current;
                 }
             }
         }
 
+        // A reconstrução do caminho continua exatamente a mesma...
         PlanetNode node = targetPlanet;
         Stack<PlanetNode> reversePath = new Stack<PlanetNode>();
-
-        while (node != currentPlanet && cameFrom.ContainsKey(node))
+        if (cameFrom.ContainsKey(node))
         {
-            reversePath.Push(node);
-            node = cameFrom[node];
+            while (node != currentPlanet)
+            {
+                reversePath.Push(node);
+                node = cameFrom[node];
+                if (node == null) break;
+            }
         }
-
+        path.Clear();
         while (reversePath.Count > 0)
         {
             path.Enqueue(reversePath.Pop());
